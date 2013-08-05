@@ -6,8 +6,13 @@
 
 */
 
+/* global location */
+/* exported Router */
 
-var Router = function Router() {
+var Router = (function Router() {
+
+	'use strict';
+
 	var app,
 		interval,
 		callback,
@@ -20,7 +25,7 @@ var Router = function Router() {
 			interval = setInterval(function checkAddressChanged() {
 				// console.log(location.hash, oldHash);
 				if (location.hash !== oldHash) {
-					onChangeLocation(location.hash, oldHash);
+					onChangeLocation(location.hash);
 					oldHash = location.hash;
 				}
 			}, 250);
@@ -36,39 +41,50 @@ var Router = function Router() {
 			return app;
 		},
 		go: function go(controller, params) {
-			//callback(controller, params);
+			var i,
+				route,
+				paramsNumber,
+				findedParams,
+				paramsMatches,
+				param;
 
-			// todo: find route that match params, and construct url
-			for (i = 0; i < routes.length; i++) {
+			for (i = 0; i < routes.length; i = i + 1) {
 				if (routes[i].controller === controller) {
-					var route = routes[i].route;
-					var findedParams = 0;
-					var paramsNumber = 0;
-					var param;
-					var tempRoute;
+					route = routes[i].route;
+					paramsNumber = 0;
+					findedParams = 0;
+
+					paramsMatches = route.match(/:[^\s\/]+/ig);
+					if (paramsMatches) {
+						paramsNumber = paramsMatches.length;
+					}
+
 					for (param in params) {
-						paramsNumber ++;
-						if (route.indexOf(':' + param) != -1) {
-							findedParams ++;
+						if (params.hasOwnProperty(param)) {
+							if (route.indexOf(':' + param) !== -1) {
+								findedParams = findedParams + 1;
+								route = route.replace(":" + param, params[param]);
+							}
 						}
 					}
 
 					if (findedParams === paramsNumber) {
-						tempRoute = route;
-						for (param in params) {
-							tempRoute = tempRoute.replace(':' + param, params[param]);
-						}
-						callback(controller, params);
-						location.hash = tempRoute;
+						break;
+					} else {
+						route = undefined;
 					}
 				}
-
 			}
 
+			if (route) {
+				setTimeout(function() {
+					location.hash = route;
+				}, 0);
+			}
 		}
 	};
 
-	function onChangeLocation(hash, oldHash) {
+	function onChangeLocation(hash) {
 
 		var i,
 			route,
@@ -78,9 +94,9 @@ var Router = function Router() {
 			j,
 			names;
 
-		for (i = 0; i < routes.length; i++) {
+		for (i = 0; i < routes.length; i = i + 1) {
 			route = routes[i].route;
-			matcher = new RegExp(route.replace(/:[^\s/]+/g, '([\%àéèìòù\.\\w\\s+]+)'));
+			matcher = new RegExp(route.replace(/:[^\s\/]+/ig, '([^\\s\\/]+)'));
 			if (matcher.test(hash)) {
 				matchResult = hash.match(matcher);
 				//routeEvent = document.createEvent("Event");
@@ -92,8 +108,8 @@ var Router = function Router() {
 
 				if (matchResult) {
 					matchResult.shift();
-					names = route.match(/:(\w+)/ig);
-					for (j = 0; j < matchResult.length; j++) {
+					names = route.match(/:[^\s\/]+/ig);
+					for (j = 0; j < matchResult.length; j = j + 1) {
 						routeEvent.params[names[j].substr(1)] = matchResult[j];
 					}
 				}
@@ -108,4 +124,4 @@ var Router = function Router() {
 	}
 
 	return app;
-}();
+}());
