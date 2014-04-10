@@ -55,6 +55,8 @@
                     paramsMatches,
                     param;
 
+                controller = (controller === "") ? "home" : controller;
+
                 for (i = 0; i < routes.length; i = i + 1) {
                     if (routes[i].controller === controller) {
                         route = routes[i].route;
@@ -82,7 +84,7 @@
                         }
                     }
                 }
-                if ( route ) {
+                if ( route !== undefined ) {
                     setTimeout(function() {
                         document.location.hash = route;
                     }, 0);
@@ -104,6 +106,7 @@
                 matcher = new RegExp(route.replace(/:[^\s\/]+/ig, '([^\\s\\/]+)'));
                 if (matcher.test(hash)) {
                     matchResult = hash.match(matcher);
+                    // console.log("Router::onChangeLocation(",hash,") ",matchResult);
                     //routeEvent = document.createEvent("Event");
                     //routeEvent.initEvent("RouteChanged", true, true);
                     routeEvent = {
